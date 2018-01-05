@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <meta name="format-detection" content="telephone=no,email=no">
+  <base href="../../"/>
+  <title>我的财富</title>
+  <link href="gv/common/css/reset.css" rel="stylesheet" type="text/css">
+  <link href="gv/common/css/main.css" rel="stylesheet" type="text/css">
+  <link href="gv/member_center/css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+	<div class="wrap wealth_all" id="wealthAll" v-cloak>
+  	<p class="wealth_tab" v-if="!bOff">
+    	<span>当前资产总额（元）</span>
+      <span class="money">{{wealthData.totalWealth}}</span>
+    </p>
+    <ul class="wealth_detail">
+    	<li v-for="item in wealthData.wealthList.wealthList">
+      	<a href="javascript:void(0)">
+          <p class="wealth_tit" incomeType="{{item.incomeType}}" contNos="{{item.contNos}}"><label>{{item.incomeTypeName}}</label></p>
+          <p><label>当前资产</label><span>{{item.sumIncomeByType}}元</span></p>
+        </a>
+      </li>
+    </ul>
+    <!--无财富险种提示-->
+    <div class="policy_tips tips_short" v-if="bOff">
+        <div class="show_no">
+            <img src="gv/member_center/images/img_no_tips.png"/>
+        </div>
+        <p>您还没有理财类险种哦～</p>
+    </div>
+  </div>
+</body>
+<script type="text/javascript" src="gv/common/js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="gv/common/js/vue.min.js"></script>
+<script type="text/javascript" src="gv/common/js/main.js"></script>
+<script>
+    window.onload = function(){
+        var wealthAll = new Vue({
+            el:'#wealthAll',
+            data:{
+                bOff:false,
+                wealthData:{} //各项价值总额
+            }
+        });
+        $.ajax({
+            url:sUrl+"center/myWealth",
+            success:function(data){
+                if(data.result){
+                    wealthAll.$set('wealthData',data.object);
+                    Vue.nextTick(function(){
+                        if($('li').length == 0){
+                            wealthAll.bOff = true;
+                        }else{
+                            wealthAll.bOff = false;
+                        }
+                        fnParam();
+                    });
+                }else{
+                    fnLayerBox(data.info);
+                    //调回个人中心首页
+                    $('.layer_btn').click(function(){
+                        location.href=sUrl+'center/toIndex';
+                    })
+                }
+            }
+        });
+        function fnParam(){
+            $('.wealth_tit').click(function(){
+                var incomeType = $(this).attr('incomeType');
+                var contNos = $(this).attr('contNos');
+                switch (incomeType) {
+                    case '001' :location.href=sUrl+'center/toMyWealth?incomeType='+incomeType+'&contNos='+encodeURIComponent(contNos);
+                        break;
+                    case '002' :location.href=sUrl+'center/toWealthDividend?incomeType='+incomeType+'&contNos='+encodeURIComponent(contNos);
+                        break;
+                    case '003' :location.href=sUrl+'center/toWealthSuvivalGold?incomeType='+incomeType+'&contNos='+encodeURIComponent(contNos);
+                        break;
+                }
+
+            });
+        }
+    };
+</script>
+</html>

@@ -1,0 +1,688 @@
+<!doctype html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <meta name="format-detection" content="telephone=no,email=no">
+  <base href="../../"/>
+  <title>我的保单</title>
+  <link href="gv/common/css/reset.css" rel="stylesheet" type="text/css">
+  <link href="gv/common/css/main.css" rel="stylesheet" type="text/css">
+  <link href="gv/member_center/css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body style="background:#eff3f2;" id="policyList" v-cloak>
+<form action="" class="policy_edor" method="post">
+	<div class="wrap policy_management">
+    <p class="policy_management_title">
+      <span :class="(bOff==1) ? 'active':''" v-on:click="showLsT">有效保单</span><span v-on:click="showLsF" :class="(bOff==1) ? '':'active'">失效/无效保单</span>
+    </p>
+    <div class="policy_management_all">
+
+        <div class="management_con" style="display:block;">
+        <div class="policy_info" v-for="item in userPolicyList" v-if="bOff == item.policyInfo.policyStatus" policy_index="{{item.policyInfo.indexes}}">
+          <div class="turn_policy_detail">
+            <p class="policy_num">
+            <a href="javascript:;"><i></i><span class="mainrisk_name">{{item.policyInfo.riskName}}</span></a>
+          </p>
+            <ul class="policy_desc">
+                          <li class="clearfix">保单号：<span class="policy_no" style="color:#2196f3;">{{item.policyInfo.policyNo}}</span></li>
+                          <li class="clearfix">生效日期：<span class="effective_date">{{item.policyInfo.cValiDate}}</span></li>
+            </ul>
+          </div>
+          <div class="policy_detail" v-if="(bOff==1) && (item.authorityList.length!=0)">
+          	<p class="policy_detail_tab">
+              <a :href="(level1.authorityCode!='4') ? 'javascript:;' : ''" v-for="level1 in item.authorityList">{{level1.authorityName}}</a>
+            </p>
+          </div>
+        </div>
+        <!--无有效保单提示信息-->
+        <div class="policy_tips" v-if="nums==0 && (bOff==1)">
+          <p>您还没有保单哦~</p>
+          <p>去给自己选一份保障吧。</p>
+          <input type="button" value="去保险商城逛逛" class="default_btn">
+        </div>
+        <!--无失效保单提示信息-->
+        <div class="policy_tips" v-if="nums==0 && (bOff==2)">
+          <p>无相关保单信息</p>
+        </div>
+      </div>
+    </div>
+      <!--底部的菜单按钮-->
+      <div class="footer_bot">
+        <ul class="personal_menu clearfix">
+          <li>
+            <a href="http://zmt.ihxlife.com/zmt/home/goMalls.do">
+              <i></i>
+              <span>保险商城</span>
+            </a>
+          </li>
+          <li>
+            <a href="javascript:void(0);" onclick="location.href=sUrl+'home/toIndex'">
+              <i></i>
+              <span>服务中心</span>
+            </a>
+          </li>
+          <li>
+            <a href="javascript:void(0);" onclick="location.href=sUrl+'center/toIndex'">
+              <i></i>
+              <span>个人中心</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+  </div>
+  <!--二级权限-->
+  <div class="layer_box_select" style="display:none;" v-if="levelCode!='4'">
+  	<div class="box_select_main">
+    	<ul>
+        <!--<li class="active"><a href="javascript:void(0);">{{levelName}}</a></li>-->
+        <li v-for="item in level2List"><a href="javascript:void(0);" code="{{item.operationCode}}" class="detail_tools_btn">{{item.operationName}}</a></li>
+      </ul>
+      <input type="button" value="取消">
+    </div>
+  </div>
+</form>
+</body>
+<script type="text/javascript" src="gv/common/js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="gv/common/js/vue.min.js"></script>
+<script type="text/javascript" src="gv/common/js/main.js"></script>
+<script>
+  window.onload = function(){
+    sessionStorage.clear();
+    var policyList = new Vue({
+      el:'#policyList',
+      data:{
+        userPolicyList:[],//保单列表
+        bOff:1,//开关(默认显示有效保单、无效保单为0)
+        nums:0,//有效&失效保单长度
+        level2List:[],//选中二级权限菜单
+        levelName:'',//选中一级权限Name
+        levelCode:''//选中一级权限code
+      },
+      methods:{
+        //显示有效表单数据
+        showLsT:function(){
+          this.bOff = 1;
+          this.$nextTick(function () {
+            fnInit();
+          })
+        },
+        //显示无效保单数据
+        showLsF:function(){
+          this.bOff = 2;
+          this.$nextTick(function () {
+            fnInit();
+          })
+        }
+      }
+    })
+    $.ajax({
+      url:sUrl+"surrender/policyList",
+      success:function(data){
+        if(data.result){
+          policyList.$set('userPolicyList',data.object.userPolicyList);
+          Vue.nextTick(function(){
+            fnInit();
+          })
+        }else{
+          fnLayerBox(data.info);
+        }
+      }
+    })
+    function fnInit(){
+      //获取保单列表长度
+      policyList.nums = $('.policy_info').length;
+      $('.default_btn').click(function(){
+        location.href = "http://zmt.ihxlife.com/zmt/home/goMalls.do";
+      });
+      //保单管理的效果
+      $('.policy_management_title span').click(function() {
+        $(this).addClass('active').siblings().removeClass('active');
+        $('.policy_management_all').find('.management_con').eq($(this).index()).show().siblings().hide();
+      });
+      var policyInd,policyNo,riskName,cValiDate;//保单列表索引
+      $('.policy_detail_tab a').click(function() {
+        var ind = $(this).index();
+        var infoInd = $('.policy_info').index($(this).parents('.policy_info'));
+        policyInd = parseInt($(this).parents('.policy_info').attr('policy_index'));//保单列表索引
+        policyNo = $('.policy_info').eq(infoInd).find('.policy_no').text();//保单号
+        riskName = $('.policy_info').eq(infoInd).find('.mainrisk_name').text();//主险名称
+        cValiDate = $('.policy_info').eq(infoInd).find('.effective_date').text();//生效日期
+
+        if(policyList.userPolicyList[policyInd].authorityList[ind].authorityCode == '4'){
+          location.href = sUrl+'onlineVisit/toIdentityAuth?policyNo='+policyNo;
+          return false;
+        }
+        //获取二级菜单权限list
+        policyList.$set('level2List',policyList.userPolicyList[policyInd].authorityList[ind].edorlist);//二级权限
+        policyList.levelName = policyList.userPolicyList[policyInd].authorityList[ind].authorityName;//一级权限名称
+        policyList.levelCode = policyList.userPolicyList[policyInd].authorityList[ind].authorityCode;//一级权限名称
+        $(this).addClass('active').siblings().removeClass('active');
+        $('.layer_box_select').show();
+
+        Vue.nextTick(function(){
+          fnEdor();
+        })
+      });
+      $('.layer_box_select input').click(function(){
+        var ind = $('.layer_box_select').index($(this).parents('.layer_box_select'));
+        $('.policy_detail_tab a').removeClass('active');
+        $('.layer_box_select').hide();
+        policyList.$set('level2List',[]);//二级权限
+      })
+      //跳转保单详情
+        $('.policy_no').click(function(){
+          var policyNo = $(this).parents('.policy_info').find('.policy_no').text();//保单号
+          location.href = sUrl+'policySearch/policySearchPage?policyNo='+policyNo;
+        });
+      $('.policy_num a').each(function(){
+        var policyNo = $(this).parents('.policy_info').find('.policy_no').text();//保单号
+        $(this).attr('href',sUrl+'policySearch/policySearchPage?policyNo='+policyNo);
+      })
+      //无效保单-无操作功能按钮
+      if(policyList.bOff == 2){
+        $('.policy_desc').css('border-bottom','none');
+      }
+      //有效保单下无权限样式
+      $('.policy_info').each(function(){
+        if($(this).find('.policy_detail a').length==0){
+          $(this).find('.policy_desc').css('border-bottom','none');
+        }
+      })
+      //二级权限功能
+      function fnEdor(){
+        $('.detail_tools_btn').each(function(){
+            $(this).click(function(){
+              var level2code = $(this).attr('code');
+              switch(level2code){
+                //1,退保(code:2)
+                case '2':
+                  fnSurrender();
+                break;
+                //2,部分领取(code:37)
+                case '37':fnReceive();
+                break;
+                //3,追加保费(code:35)
+                case '35':fnTacked();
+                break;
+                //4,续期交费(code:ir1)
+                case 'ir1':fnRenewal();
+                break;
+                //5,基本资料变更(code:21)
+                case '21':fnBasic();
+                break;
+                //6,交费账号变更(code:23)
+                case '23':
+                  fnPay();
+                break;
+                //7,续保方式变更(code:42)
+                case '42':fnWay();
+                break;
+                //8,垫交方式变更(code:25)
+                case '25':fnMat();
+                  break;
+                //9,红利领取方式变更(code:26)
+                case '26':fnDividend();
+                  break;
+                //10,保单借款(code:8)
+                case '8':fnBorrow();
+                  break;
+                //11,保单还款(code:9)
+                case '9':fnRepayment();
+                  break;
+              }
+            })
+          })
+        //1,退保
+        function fnSurrender(){
+          $('.policy_detail_tab a').each(function(){$(this).removeClass('active');})
+          $('.layer_box_select').hide();
+          policyList.$set('level2List',[]);//二级权限
+          $.ajax({
+            url:sUrl+'surrender/surrenderTrial',
+            data:{
+              policyNo:policyNo,
+              cValiDate:cValiDate
+            },
+            success:function(data){
+              if(data.result)
+              {
+                var surrenderObj = {
+                  "policyNo":policyNo,
+                  "surrenderSign":data.object.surrenderSign,
+                  "edorAppDate":data.object.edorAppDate,
+                  "orderNo":data.object.surrenderTrial.orderNo,
+                  "day":data.object.surrenderTrial.day,
+                  "money":data.object.surrenderTrial.money,
+                  "accName":data.object.surrenderTrial.accName,
+                  "bankCode":data.object.surrenderTrial.bankCode,
+                  "accNo":data.object.surrenderTrial.accNo,
+                  "cValiDate":cValiDate,
+                  "riskName":riskName
+                }
+                fnHideInput(surrenderObj,$('.policy_edor'));
+                $('.policy_edor').attr('action',sUrl+'surrender/toPage');
+                $('.policy_edor').submit();
+              }else{
+                fnLayerBox(data.info);
+              }
+            }
+          })
+        }
+        //2,部分领取
+        function fnReceive(){
+          $('.policy_detail_tab a').each(function(){$(this).removeClass('active');})
+          $('.layer_box_select').hide();
+          policyList.$set('level2List',[]);//二级权限
+          $.ajax({
+            url:sUrl+'partReceive/partReceiveAuthority',
+            data:{
+              policyNo:policyNo,
+              riskName:riskName,
+              cValiDate:cValiDate
+            },
+            success:function(data){
+              if(data.result)
+              {
+                var addPremiumObj = {
+                  "policyNo":policyNo,
+                  "riskName":riskName,
+                  "cValiDate":cValiDate,
+                  "edorAppDate":data.object.edorAppDate,
+                  "partReceiveSign":data.object.partReceiveSign,
+                  "currentValue":data.object.partReceiveInfo.currentValue,
+                  "bankCode":data.object.partReceiveInfo.bankCode,
+                  "orderNo":data.object.partReceiveInfo.orderNo,
+                  "bankName":data.object.partReceiveInfo.bankName,
+                  "accNo":data.object.partReceiveInfo.accNo,
+                  "accName":data.object.partReceiveInfo.accName
+                }
+                fnHideInput(addPremiumObj,$('.policy_edor'));
+                $('.policy_edor').attr('action',sUrl+'partReceive/toPartPage');
+                $('.policy_edor').submit();
+              }else{
+                fnLayerBox(data.info);
+              }
+            }
+          })
+        }
+        //3,追加保费
+        function fnTacked(){
+          $('.policy_detail_tab a').each(function(){$(this).removeClass('active');})
+          $('.layer_box_select').hide();
+          policyList.$set('level2List',[]);//二级权限
+          $.ajax({
+            url:sUrl+'addPremium/premiumAuthority',
+            data:{
+              policyNo:policyNo
+            },
+            success:function(data){
+              if(data.result)
+              {
+                var addPremiumObj = {
+                  "policyNo":policyNo,
+                  "edorAppDate":data.object.edorAppDate,
+                  "addPremiumSign":data.object.addPremiumSign,
+                  "orderNo":data.object.addPremInfo.orderNo,
+                  "appntName":data.object.addPremInfo.appntName,
+                  "riskName":riskName,
+                  "cValiDate":cValiDate,
+                  "currentValue":data.object.addPremInfo.currentValue
+                }
+                fnHideInput(addPremiumObj,$('.policy_edor'));
+                $('.policy_edor').attr('action',sUrl+'addPremium/toPage');
+                $('.policy_edor').submit();
+              }else{
+                fnLayerBox(data.info);
+              }
+            }
+          })
+        }
+        //4,续期交费
+        function fnRenewal(){
+          $('.policy_detail_tab a').each(function(){$(this).removeClass('active');})
+          $('.layer_box_select').hide();
+          policyList.$set('level2List',[]);//二级权限
+          $.ajax({
+            url:sUrl+'renewalPay/paymentDetails',
+            data:{
+              policyNo:policyNo
+            },
+            success:function(data){
+              if(data.result)
+              {
+                var renewalPayWayObj = {
+                  "renewalPaySign":data.object.renewalPaySign,
+                  "policyNo":policyNo,
+                  "riskName":data.object.renewalPayInfo.riskName,
+                  "cValiDate":data.object.renewalPayInfo.cValiDate,
+                  "appntName":data.object.renewalPayInfo.appntName,
+                  "insuredName":data.object.renewalPayInfo.insuredName,
+                  "duePayMoney":data.object.renewalPayInfo.duePayMoney,
+                  "modaltotalpPrem":data.object.renewalPayInfo.modaltotalpPrem,
+                  "duePayMoneyDueDate":data.object.renewalPayInfo.duePayMoneyDueDate,
+                  "accNo":data.object.renewalPayInfo.accNo,
+                  "bankCode":data.object.renewalPayInfo.bankCode,
+                  "bankName":data.object.renewalPayInfo.bankName,
+                  "accName":data.object.renewalPayInfo.accName,
+                  "currentValue":data.object.renewalPayInfo.currentValue,
+                  "currentAvailableValue":data.object.renewalPayInfo.currentAvailableValue,
+                  "flag":data.object.renewalPayInfo.flag,
+                  "flagMsg":data.object.renewalPayInfo.flagMsg
+                };
+                fnHideInput(renewalPayWayObj,$('.policy_edor'));
+                $('.policy_edor').attr('action',sUrl+'renewalPay/toPage');
+                $('.policy_edor').submit();
+              }else{
+                fnLayerBox(data.info);
+              }
+            }
+          })
+        }
+        //5,基本资料变更
+        function fnBasic(){
+          $('.policy_detail_tab a').each(function(){$(this).removeClass('active');})
+          $('.layer_box_select').hide();
+          policyList.$set('level2List',[]);//二级权限
+          $.ajax({
+            url:sUrl+'basicInfo/basicInfoTrial',
+            data:{
+              policyNo:policyNo,
+              riskName:riskName,
+              cValiDate:cValiDate
+            },
+            success:function(data){
+              if(data.result)
+              {
+                var basicInfoObj = {
+                  "policyNo":policyNo,
+                  "basicInfoSign":data.object.basicInfoSign,
+                  "edorAppDate":data.object.edorAppDate,
+                  "orderNo":data.object.baseInfo.orderNo,
+                  "riskName":riskName,
+                  "idNo":data.object.baseInfo.idNo,
+                  "idTypeValiDate":data.object.baseInfo.idTypeValiDate,
+                  "idType":data.object.baseInfo.idType,
+                  "idTypeName":data.object.baseInfo.idTypeName,
+                  "appntBirthday":data.object.baseInfo.appntBirthday,
+                  "appntName":data.object.baseInfo.appntName,
+                  "email":data.object.baseInfo.email,
+                  "sexCode":data.object.baseInfo.sexCode,
+                  "marriedCode":data.object.baseInfo.marriedCode,
+                  "registerPlace":data.object.baseInfo.registerPlace,
+                  "nationality":data.object.baseInfo.nationality,
+                  "nations":data.object.baseInfo.nations,
+                  "workUnit":data.object.baseInfo.workUnit,
+                  "educated":data.object.baseInfo.educated,
+                  "province":data.object.baseInfo.province,
+                  "city":data.object.baseInfo.city,
+                  "area":data.object.baseInfo.area,
+                  "address":data.object.baseInfo.address,
+                  "zipCode":data.object.baseInfo.zipCode,
+                  "cValiDate":cValiDate
+                }
+                if(data.object.baseInfo.policys){
+                  var len = data.object.baseInfo.policys.length;
+                  var objList = data.object.baseInfo.policys;
+                  var policyNoList = [];//保单列表
+                  for(var i=0;i<len;i++){
+                    var str = '';
+                    str = '{'+
+                      '"policyNo":'+ '"'+ objList[i].policyNo +'",' +
+                      '"cValiDate":'+ '"'+ objList[i].cValiDate +'",' +
+                      '"riskName":'+'"'+ objList[i].riskName +'"' +
+                      '}';
+                    policyNoList.push(str);
+                  }
+                  var inpList = "<input type='hidden' name='policyLists' value='"+"["+policyNoList+"]"+"'>";
+                  $('.policy_edor').append(inpList);
+                }
+                fnHideInput(basicInfoObj,$('.policy_edor'));
+                $('.policy_edor').attr('action',sUrl+'basicInfo/baseInfoPage');
+                $('.policy_edor').submit();
+              }else{
+                fnLayerBox(data.info);
+              }
+            }
+          })
+        }
+        //6,交费账号变更
+        function fnPay(){
+          $('.policy_detail_tab a').each(function(){$(this).removeClass('active');})
+          $('.layer_box_select').hide();
+          policyList.$set('level2List',[]);//二级权限
+          $.ajax({
+            url:sUrl+'payment/policyTrial',
+            data:{
+              policyNo:policyNo,
+              riskName:riskName,
+              cValiDate:cValiDate
+            },
+            success:function(data){
+              if(data.result)
+              {
+                var paymentObj = {
+                  "policyNo":policyNo,
+                  "payAccountSign":data.object.payAccountSign,
+                  "orderNo":data.object.policyInfo.orderNo,
+                  "edorAppDate":data.object.policyInfo.edorAppDate,
+                  "accName":data.object.policyInfo.accName,
+                  "bankCode":data.object.policyInfo.bankCode,
+                  "bankName":data.object.policyInfo.bankName,
+                  "accNo":data.object.policyInfo.accNo,
+                  "cValiDate":cValiDate,
+                  "riskName":riskName
+                }
+                if(data.object.policyInfo.policyList){
+                  var len = data.object.policyInfo.policyList.length;
+                  var objList = data.object.policyInfo.policyList;
+                  var str = '';
+                  for(var i=0;i<len;i++){
+                    str+='<input type="hidden" name="policyList['+i+'].riskName" value="'+objList[i].riskName+'">'
+                      +'<input type="hidden" name="policyList['+i+'].cValiDate" value="'+objList[i].cValiDate+'">'
+                      +'<input type="hidden" name="policyList['+i+'].policyNo" value="'+objList[i].policyNo+'">';
+                  }
+
+                  $('.policy_edor').append(str);
+                }
+                fnHideInput(paymentObj,$('.policy_edor'));
+                $('.policy_edor').attr('action',sUrl+'payment/toPage');
+                $('.policy_edor').submit();
+              }else{
+                fnLayerBox(data.info);
+              }
+            }
+          })
+        }
+        //7,续保方式变更
+        function fnWay(){
+          $('.policy_detail_tab a').each(function(){$(this).removeClass('active');})
+          $('.layer_box_select').hide();
+          policyList.$set('level2List',[]);//二级权限
+          $.ajax({
+            url:sUrl+'renewal/renewalChanegTrial',
+            data:{
+              policyNo:policyNo,
+              riskName:riskName,
+              cValiDate:cValiDate
+            },
+            success:function(data){
+              if(data.result)
+              {
+                var renewalWayObj = {
+                  "renewalSign":data.object.renewalSign,
+                  "edorAppDate":data.object.edorAppDate,
+                  "policyNo":policyNo,
+                  "riskName":riskName,
+                  "cValiDate":cValiDate,
+                  "renewalMode":data.object.renewalInfo.renewalMode,
+                  "accNo":data.object.renewalInfo.accNo,
+                  "hideAccNo":data.object.renewalInfo.hideAccNo,
+                  "bankCode":data.object.renewalInfo.bankCode,
+                  "bankName":data.object.renewalInfo.bankName,
+                  "accName":data.object.renewalInfo.accName,
+                  "orderNo":data.object.renewalInfo.orderNo,
+                  "mobile":data.object.renewalInfo.mobile
+                };
+                fnHideInput(renewalWayObj,$('.policy_edor'));
+                $('.policy_edor').attr('action',sUrl+'renewal/toChangePage');
+                $('.policy_edor').submit();
+              }else{
+                fnLayerBox(data.info);
+              }
+            }
+          })
+        }
+        //8.垫交方式变更
+        function fnMat(){
+          $('.policy_detail_tab a').each(function(){$(this).removeClass('active');})
+          $('.layer_box_select').hide();
+          policyList.$set('level2List',[]);//二级权限
+          $.ajax({
+            url:sUrl+'advanceChange/trial',
+            data:{
+              policyNo:policyNo,
+              riskName:riskName,
+              cValiDate:cValiDate
+            },
+            success:function(data){
+              if(data.result)
+              {
+                var matModeObj = {
+                  "advanceSign":data.object.advanceSign,
+                  "edorAppDate":data.object.advance.edorAppDate,
+                  "policyNo":policyNo,
+                  "riskName":riskName,
+                  "cValiDate":cValiDate,
+                  "orderNo":data.object.advance.orderNo,
+                  "mobile":data.object.advance.mobile,
+                  "shieldMobile":data.object.advance.shieldMobile,
+                  "advanceFlag":data.object.advance.advanceFlag
+                };
+                fnHideInput(matModeObj,$('.policy_edor'));
+                $('.policy_edor').attr('action',sUrl+'advanceChange/toPage');
+                $('.policy_edor').submit();
+              }else{
+                fnLayerBox(data.info);
+              }
+            }
+          })
+        }
+        //9.红利领取方式变更
+        function fnDividend(){
+          $('.policy_detail_tab a').each(function(){$(this).removeClass('active');})
+          $('.layer_box_select').hide();
+          policyList.$set('level2List',[]);//二级权限
+          $.ajax({
+            url:sUrl+'dividendChange/trial',
+            data:{
+              policyNo:policyNo,
+              riskName:riskName,
+              cValiDate:cValiDate
+            },
+            success:function(data){
+              if(data.result)
+              {
+                var dividendObj = {
+                  "dividendSign":data.object.dividendSign,
+                  "edorAppDate":data.object.dividend.edorAppDate,
+                  "policyNo":policyNo,
+                  "riskName":riskName,
+                  "cValiDate":cValiDate,
+                  "orderNo":data.object.dividend.orderNo,
+                  "mobile":data.object.dividend.mobile,
+                  "shieldMobile":data.object.dividend.shieldMobile,
+                  "dividendFlag":data.object.dividend.dividendFlag
+                };
+                fnHideInput(dividendObj,$('.policy_edor'));
+                $('.policy_edor').attr('action',sUrl+'dividendChange/toPage');
+                $('.policy_edor').submit();
+              }else{
+                fnLayerBox(data.info);
+              }
+            }
+          })
+        }
+        //10.保单借款
+        function fnBorrow(){
+          $('.policy_detail_tab a').each(function(){$(this).removeClass('active');})
+          $('.layer_box_select').hide();
+          policyList.$set('level2List',[]);//二级权限
+          $.ajax({
+            url:sUrl+'loan/loanApply',
+            data:{
+              policyNo:policyNo,
+              riskName:riskName,
+              cValiDate:cValiDate
+            },
+            success:function(data){
+              if(data.result)
+              {
+                var borrowObj = {
+                  "loanSign":data.object.loanSign,
+                  "edorAppDate":data.object.edorAppDate,
+                  "policyNo":policyNo,
+                  "riskName":riskName,
+                  "cValiDate":cValiDate,
+                  "orderNo":data.object.orderNo,
+                  "accName":data.object.accName,
+                  "cashValue":data.object.cashValue,
+                  "maxLoanMoney":data.object.maxLoanMoney,
+                  "bankName":data.object.bankName,
+                  "bankCode":data.object.bankCode,
+                  "bankNo":data.object.bankNo,
+                  "shieldBankNo":data.object.shieldBankNo
+                };
+                fnHideInput(borrowObj,$('.policy_edor'));
+                $('.policy_edor').attr('action',sUrl+'loan/loanInput');
+                $('.policy_edor').submit();
+              }else{
+                fnLayerBox(data.info);
+              }
+            }
+          })
+        }
+        //11.保单还款
+        function fnRepayment(){
+          $('.policy_detail_tab a').each(function(){$(this).removeClass('active');})
+          $('.layer_box_select').hide();
+          policyList.$set('level2List',[]);//二级权限
+          $.ajax({
+            url:sUrl+'repay/repayApply',
+            data:{
+              policyNo:policyNo
+            },
+            success:function(data){
+              if(data.result)
+              {
+                var repayObj = {
+                  "repaySign":data.object.repaySign,
+                  "edorAppDate":data.object.edorAppDate,
+                  "policyNo":policyNo,
+                  "riskName":riskName,
+                  "cValiDate":cValiDate,
+                  "orderNo":data.object.orderNo,
+                  "accNo":data.object.accNo,
+                  "shieldAccNo":data.object.shieldAccNo,
+                  "accName":data.object.accName,
+                  "bankName":data.object.bankName,
+                  "bankCode":data.object.bankCode,
+                  "loanApplyDate":data.object.loanApplyDate,
+                  "loanMoney":data.object.loanMoney,
+                  "loanInterest":data.object.loanInterest,
+                  "sumLoan":data.object.sumLoan
+                };
+                fnHideInput(repayObj,$('.policy_edor'));
+                $('.policy_edor').attr('action',sUrl+'repay/repayInput');
+                $('.policy_edor').submit();
+              }else{
+                fnLayerBox(data.info);
+              }
+            }
+          })
+        }
+      }
+    }
+  }
+</script>
+</html>

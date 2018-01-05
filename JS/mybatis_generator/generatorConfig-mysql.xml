@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN" "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd" >
+<generatorConfiguration >
+<!-- 设置Mysql驱动路径 -->
+<classPathEntry location="./mysql-connector-java-5.1.21-bin.jar" />
+
+<!-- 此处指定生成针对MyBatis3的DAO -->
+<context id="shark"  targetRuntime="MyBatis3">
+<!-- jdbc连接信息 -->
+
+    
+<jdbcConnection driverClass="com.mysql.jdbc.Driver" connectionURL="jdbc:mysql://localhost:3306/js?useUnicode=true&amp;characterEncoding=UTF-8&amp;zeroDateTimeBehavior=convertToNull" userId="root" password="root" />
+     
+     <javaModelGenerator targetPackage="com.js.modules.user.dao.mybatis.entity" targetProject="../src/main/java"  />
+     <sqlMapGenerator targetPackage="com.js.modules.user.dao.mybatis.sqlMap" targetProject="../src/main/java" />
+    <javaClientGenerator targetPackage="com.js.modules.user.dao.mybatis.mapper" targetProject="../src/main/java"  type="XMLMAPPER"/>
+     	<table tableName="user_info" domainObjectName="user">
+        	<generatedKey column="ID" sqlStatement="SELECT LAST_INSERT_ID() "  identity="true"/> 
+    	</table>
+    <!-- 
+     <javaModelGenerator targetPackage="com.js.modules.wechatuser.dao.mybatis.entity" targetProject="../src/main/java"  />
+     <sqlMapGenerator targetPackage="com.js.modules.wechatuser.dao.mybatis.sqlMap" targetProject="../src/main/java" />
+    <javaClientGenerator targetPackage="com.js.modules.wechatuser.dao.mybatis.mapper" targetProject="../src/main/java"  type="XMLMAPPER"/>
+     	<table tableName="wechat" domainObjectName="wechatuser">   	
+    	</table>
+    		 -->
+</context>
+</generatorConfiguration>

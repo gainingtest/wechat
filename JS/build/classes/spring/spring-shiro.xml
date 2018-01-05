@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:util="http://www.springframework.org/schema/util" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+	
+	<!-- shiro filter -->
+	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+   <property name="securityManager" ref="securityManager" />
+		<property name="loginUrl" value="/index" />
+		<!-- 无权限调整地址 -->
+		<property name="unauthorizedUrl" value="/error.html" />
+		<!-- 权限认证成功跳转页面 -->
+		<property name="successUrl" value="/main" />
+		
+		<!-- 权限认证类 -->
+		<property name="filters">
+			<util:map>
+				<entry key="authc" value-ref="customFormAuthenticationFilter" />
+			</util:map>
+		</property>
+		
+		<property name="filterChainDefinitions">
+			<value>  
+				/Pages/**=anon
+                /loginInfo/**=anon
+                /index/=anon
+                /gv/** =anon
+                /gv/common/** =anon
+                /gv/common/js/** =anon
+                /captcha/**=anon
+                /loginByMobile/**=anon
+                /common/**=anon
+                /tologin/**=anon
+                /user/**=anon
+                /wechat/**=anon
+                /user/**=anon
+                /course/**=anon
+                /**=authc  
+            </value>
+		</property>
+	</bean>
+	
+	
+	<!-- shiro securityManager -->
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<property name="realm" ref="manageRealmAuthorizingRealm" />
+		 <!--缓存管理 -->
+	    <property name="cacheManager" ref="cacheManager" />
+	    <!-- session管理 -->
+	    <property name="sessionManager" ref="sessionManager" />
+	</bean>
+	
+	<!-- Realm实现自定义 -->
+	<bean id="manageRealmAuthorizingRealm" class="com.js.support.security.ManageRealmAuthorizingRealm">
+		<property name="cachingEnabled" value="false" />
+	</bean>
+	
+	
+	 <!-- 用户授权信息Cache -->  
+    <bean id="cacheManager" class="org.apache.shiro.cache.MemoryConstrainedCacheManager" />  
+	
+	 <!-- 保证实现了Shiro内部lifecycle函数的bean执行 -->  
+	<bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>  
+
+
+	<!-- 检查超时 -->
+	<bean id="sessionValidationScheduler" class="org.apache.shiro.session.mgt.ExecutorServiceSessionValidationScheduler">
+	    <property name="interval" value="1800000"/>
+	    <property name="sessionManager" ref="sessionManager"/>
+	</bean>
+
+	<!-- sessionManager -->
+	<bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
+	    <property name="sessionValidationScheduler" ref="sessionValidationScheduler"/>
+        <property name="sessionValidationSchedulerEnabled" value="true"/>
+        <property name="sessionIdCookie" ref="jsessionID"/>
+	</bean>
+	<!--
+	指定本系统SESSIONID, 默认为: JSESSIONID
+	问题: 与SERVLET容器名冲突, 如JETTY, TOMCAT 等默认JSESSIONID,
+	当跳出SHIRO SERVLET时如ERROR-PAGE容器会为JSESSIONID重新分配值导致登录会话丢失!
+	-->
+	<bean id="jsessionID" class="org.apache.shiro.web.servlet.SimpleCookie">
+	    <constructor-arg name="name" value="UNIONJSESSIONID"/>
+	</bean>
+	
+	<!-- 基于Form表单的身份验证过滤器 -->
+	<bean id="customFormAuthenticationFilter" class="com.js.support.security.CustomFormAuthenticationFilter">
+		<property name="usernameParam" value="username" />
+		<property name="passwordParam" value="password" />
+		<property name="rememberMeParam" value="rememberMe" />
+		<!-- 登录地址 -->
+		<property name="loginUrl" value="/index" />
+		<!-- 权限认证成功跳转地址 -->
+		<property name="successUrl" value="/main" />
+	</bean>
+	
+	<bean id="rememberMeCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
+        <constructor-arg value="v_v-re-baidu"/>
+        <property name="httpOnly" value="true"/>
+        <property name="maxAge" value="2592000"/><!-- 30天 -->
+    </bean>
+	
+</beans>

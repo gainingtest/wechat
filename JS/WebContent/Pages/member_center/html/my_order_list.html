@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <meta name="format-detection" content="telephone=no,email=no">
+  <base href="../../"/>
+  <title>我的订单</title>
+  <link href="gv/common/css/reset.css" rel="stylesheet" type="text/css">
+  <link href="gv/common/css/main.css" rel="stylesheet" type="text/css">
+  <link href="gv/member_center/css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+	<div class="wrap policy_management" id="order_list" v-cloak>
+    <div class="policy_management_all">
+    	<div class="management_con" style="display:block;">
+            <div class=" policy_info" style="margin:0rem 0rem 0.4rem;" v-for="item in orderList">
+              <p class="policy_num">
+                <a href="{{item.detailUrl}}"><i></i>{{item.mainriskName}}<!-- <span class="no_pay">{{item.payState}}</span> --></a>
+              </p>
+              <ul class="policy_desc" style="border:none;">
+                <li class="clearfix">订单号：<span>{{item.orderNo}}</span></li>
+                <li class="clearfix">订单创建日期：<span>{{item.appiyDate}}</span></li>
+              </ul>
+            </div>
+            <!--无订单提示-->
+            <div class="policy_tips tips_short" v-if="orderList.length==0">
+                <div class="show_no">
+                    <img src="gv/member_center/images/img_no_tips.png"/>
+                </div>
+                <p>您近期无订单记录哦~</p>
+                <p>去给自己选一份保障吧。</p>
+                <input type="button" value="去保险商城逛逛" class="default_btn">
+            </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+<script type="text/javascript" src="gv/common/js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="gv/common/js/vue.min.js"></script>
+<script type="text/javascript" src="gv/common/js/main.js"></script>
+<script type="text/javascript">
+  window.onload = function(){
+    var order = new Vue({
+      el:"#order_list",
+      data:{
+        orderList:[]
+      }
+    });
+    $.ajax({
+      url:sUrl+'center/getOrderList',
+      success:function(data){
+        if(data.result){
+          order.$set('orderList',data.object);
+          Vue.nextTick(function(){
+              $('.default_btn').click(function(){
+                location.href = "http://zmt.ihxlife.com/zmt/home/goMalls.do";
+              });
+          });
+        }else{
+          fnLayerBox(data.info);
+        }
+      }
+    })
+  }
+</script>
+</html>

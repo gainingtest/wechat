@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <meta name="format-detection" content="telephone=no,email=no">
+  <base href="../../"/>
+  <title>满意度调查</title>
+  <link href="gv/common/css/reset.css" rel="stylesheet" type="text/css">
+  <link href="gv/common/css/main.css" rel="stylesheet" type="text/css">
+  <link href="gv/member_center/css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+	<div class="wrap satisfy_survey">
+        <div class="score_section clearfix">
+            <img src="gv/member_center/images/img_bless.png"/>
+            <p class="survey_title">亲，请您对我们的服务进行评价！</p>
+            <p><i></i><i></i><i></i><i></i><i></i></p>
+        </div>
+        <div class="survey_area">
+            <textarea placeholder="写下您对此次服务的感受来帮助我们做更好的服务。" class="survey_word" maxlength="200"></textarea>
+            <p class="count_limit"><span>0</span>/200</p>
+        </div>
+        <p class="wrong_tips" style="padding-top:0.5rem;"></p>
+        <div class="single_btn">
+            <input type="button" value="提 交" class="default_btn save_btn">
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="gv/common/js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="gv/common/js/main.js"></script>
+<script type="text/javascript">
+window.onload = function(){
+  //评分
+  var iScore =5;//评分
+  $('.score_section p i').addClass('active');
+  $('.score_section p i').click(function(){
+    if($(this).prevAll('i').length == 0){
+      $(this).nextAll().removeClass('active');
+    }else{
+      $(this).toggleClass('active');
+      $(this).prevAll().addClass('active');
+      $(this).nextAll().removeClass('active');
+    }
+    iScore = $('.active').length;
+	})
+  //文本域数字
+  $('.survey_word').keyup(function(){
+    $('.count_limit span').text($(this).val().length);
+  });
+  $('.survey_word').bind('input',function(){
+    $('.count_limit span').text($(this).val().length);
+  });
+  //截取链接字段
+  fnUrlData();
+  //提交
+  $('.default_btn').click(function(){
+    $.ajax({
+      url:sUrl+'center/satisfySurvey',
+      data:{
+        score:iScore,
+        evaluate:$('.survey_word').val(),
+        targetNo:aValue[0],
+        targetLabel:aValue[1],
+        investigationId:aValue[2],
+        openId:aValue[3]
+      },
+      success:function(data){
+        if(data.result){
+          fnLayerBox("您的评价已提交成功！");
+          function onBridgeReady() {
+            WeixinJSBridge.invoke('closeWindow',{
+            },function(res){
+            });
+          }
+          $('.layer_btn').click(function(){
+            if (typeof WeixinJSBridge === "undefined") {
+              document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);
+            } else {
+              onBridgeReady();
+            }
+          });
+        }else{
+          fnLayerBox(data.info);
+        }
+      }
+    })
+  })
+}
+</script>
+</html>

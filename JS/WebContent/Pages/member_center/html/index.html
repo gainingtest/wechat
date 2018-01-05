@@ -1,0 +1,162 @@
+<!doctype html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <meta name="format-detection" content="telephone=no,email=no">
+  <base href="../../../"/>
+  <title>个人中心</title>
+  <link href="gv/common/css/reset.css" rel="stylesheet" type="text/css">
+  <link href="gv/common/css/main.css" rel="stylesheet" type="text/css">
+  <link href="gv/member_center/css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body class="bg_white">
+	<div class="wrap" id="personalInfo" v-cloak>
+        <header>
+              <div class="header_title">
+                <dl class="title_info">
+                    <dt>
+                    	<img src="" class="personal_img"/>
+                    </dt>
+                  <dd>
+                    <P>{{infoData.userName}}</P>
+                    <P>{{infoData.mobile}}</P>
+                  </dd>
+                </dl>
+              </div>
+        </header>
+        <div class="personal_policy clearfix">
+            <dl v-else class="index_degree">
+                <dt>{{infoData.noApplication}}</dt>
+                <dd>打卡记录</dd>
+            </dl>
+            <span></span>
+            <dl v-else onclick="location.href=sUrl+'center/toMyOrderList'">
+                <dt>{{infoData.myOrder}}</dt>
+                <dd>指标记录</dd>
+            </dl>
+            <span></span>
+            <dl v-else class="index_degree">
+                <dt class="policy_nums">{{infoData.myPolicy}}</dt>
+                <dd>我的教练</dd>
+            </dl>
+        </div>
+        <ul class="personal_detail clearfix">
+            <li>
+            <a href="javascript:void(0);" onclick="location.href=sUrl+'course/getImg'">
+              <i></i>
+              <span>课程安排</span>
+            </a>
+          </li>
+            <li>
+            <a href="javascript:void(0);" onclick="location.href=sUrl+'center/toMyAdvise'">
+              <i></i>
+              <span>我要咨询</span>
+            </a>
+          </li>
+            <li>
+            <a href="javascript:void(0);" onclick="location.href=sUrl+'center/toAdvise'">
+              <i></i>
+              <span>交流区</span>
+            </a>
+          </li>
+          
+        </ul>
+        <!--底部的菜单按钮-->
+       
+        <!--底部的菜单按钮结束-->
+    </div>
+    <!--弹层结束-->
+    <!--弹层-完善会员信息-->
+    <div class="tips_layer layer_box_member layer_box_complete">
+        <div class="layer_main">
+            <h3 class="layer_box_top">温馨提示</h3>
+            <div class="layer_password">
+                <p style="margin-top:0.75rem;" class="layer_password_des">亲，您还没有完善身份信息。</p>
+                <div class="layer_btn1 two_btn clearfix">
+                    <input type="button" value="完善身份信息" class="default_btn complete_btn fl"/>
+                    <input type="button" value="取消" class="default_btn cancel_btn cancel_complete_btn fr"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--弹层结束-->
+
+</body>
+<script type="text/javascript" src="gv/common/js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="gv/common/js/vue.min.js"></script>
+<script type="text/javascript" src="gv/common/js/main.js"></script>
+<script>
+    window.onload = function(){
+        var personalInfo = new Vue({
+            el:'#personalInfo',
+            data:{
+                authenState:'',
+                infoData:{}//
+            }
+        });
+        $.ajax({
+            url:sUrl+"center/homePage",
+            success:function(data){
+                if(data.result){
+                    personalInfo.$set('infoData',data.object);
+                    $('.personal_img').attr('src',data.object.imgUrl);
+                    $('.perfect_degree').val(data.object.perfect);
+                    Vue.nextTick(function(){
+                        fnInit();
+                    })
+                }else{
+                    fnLayerBox(data.info);
+                }
+            }
+        });
+      
+        function fnInit(){
+            //资料完善度
+            function fnDegree(){
+                var degreeNum = parseInt($('.perfect_degree').val());
+                if(degreeNum == 0){
+                    $('.layer_box_complete').show();
+                    $('.complete_btn').click(function(){
+                        $('.layer_box_complete').hide();
+                        location.href=sUrl+"personalInfo/toInfo";
+                    });
+                    return false;
+                }else{
+                    return true;
+                }
+            }
+            $('.index_degree').click(function(e){
+                var ev = window.event || e;
+                var text = $(this).find('dd').text();
+                var wealth = $(this).find('span').text();
+                var b = fnDegree();
+                if(!b){
+                    ev.preventDefault();
+                    return false;
+                }else{
+                  if(text == '我的申请'){
+                      location.href=sUrl+'progress/progressPage';
+                  }else if(text == '我的课程'){
+                      location.href=sUrl+'center/toPolicyManagement';
+                  }else if(wealth == '我的教练'){
+                      location.href=sUrl+'center/toWealthAll';
+                  }
+                }
+            });
+            //关闭须知弹层
+            $('.cancel_btn,.layer_box_top i').click(function(){
+              $('.notice_layer').hide();
+            });
+            $('.cancel_complete_btn').click(function(){
+                $('.layer_box_complete').hide();
+            });
+            
+            //关闭其他弹层
+            $('.layer_box2 .layer_btn').click(function(){
+                $('.layer_box2').hide();
+            });
+        }
+    }
+</script>
+</html>

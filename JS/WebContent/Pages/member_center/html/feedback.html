@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <meta name="format-detection" content="telephone=no,email=no">
+  <base href="../../"/>
+  <title>留言板</title>
+  <link href="gv/common/css/reset.css" rel="stylesheet" type="text/css">
+  <link href="gv/common/css/main.css" rel="stylesheet" type="text/css">
+  <link href="gv/member_center/css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body class="bg_gray">
+  <form method="post" class="feedback_form">
+	<div class="wrap feedback">
+    <p class="feed_type">请选择您的反馈类型</p>
+    <ul class="feed_select">
+      <li><label code="w01"><span></span><input type="checkbox" name="advice_type">产品咨询</label></li>
+      <li><label code="w02"><span></span><input type="checkbox" name="advice_type">服务咨询</label></li>
+      <li><label code="w03"><span></span><input type="checkbox" name="advice_type">服务投诉</label></li>
+      <li><label code="w04"><span></span><input type="checkbox" name="advice_type">功能改进</label></li>
+      <li><label code="w05"><span></span><input type="checkbox" name="advice_type">其他</label></li>
+    </ul>
+  	<div class="opinion_section">
+      <textarea placeholder="请输入您的留言" class="feed_word" maxlength="100"></textarea>
+      <p class="count_num"><span>0</span>/100</p>
+    </div>
+      <p class="wrong_tips" style="padding-top:0.5rem;"></p>
+    <div class="telephone_connection clearfix">
+      <label>联系电话</label>
+      <input type="text" placeholder="选填，便于我们与您联系" class="mobile" maxlength="13">
+      <p class="wrong_tips" style="padding-top:0.5rem;"></p>
+    </div>
+    <div class="pic_code clearfix">
+      <input type="text" placeholder="请输入验证码" class="short img_code" maxlength="4">
+      <span class="img_pic"><i></i><img src=""></span>
+      <p class="wrong_tips"></p>
+    </div>
+    <div class="single_btn">
+      <input type="button" value="提 交" class="default_btn save_btn">
+    </div>
+  </div>
+  </form>
+</body>
+<script type="text/javascript" src="gv/common/js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="gv/common/js/main.js"></script>
+<script type="text/javascript" src="gv/member_center/js/style.js"></script>
+<script>
+window.onload = function(){
+  document.getElementsByTagName("html")[0].style.fontSize=document.documentElement.clientWidth/15+"px";
+//改变窗口的时候重新计算大小
+  window.onresize = function(){
+    document.getElementsByTagName("html")[0].style.fontSize=document.documentElement.clientWidth/15+"px";
+  }
+  //默认选择服务咨询
+  $('.feed_select li input').prop('checked',false);
+  $('.feed_select li input').eq(1).prop('checked',true);
+  $('.feed_select li input').eq(1).parents('label').toggleClass('active');
+  //图片验证码
+  fnTabImgCode($('.img_pic'),sUrl);//换一张图片验证码
+  fnCheckImgCode($('.img_code'));
+  $('.img_code').keyup(function(){
+    var bCode = fnImgCode($('.img_code'));
+    if(bCode){
+      fnTimeImgCode();
+    }
+  })
+  //验证手机号，非必填
+  function fnTel(obj){
+    var regIphone = /^1[3|4|5|7|8]\d{9}$|^0085[23]\d{8}$|^00886\d{8}$/;
+    var val = obj.val();
+    if(!regIphone.test(val)&&val!=''){
+      obj.siblings('.wrong_tips').text('请输入正确的手机号！').show();
+      return false;
+    }else{
+      obj.siblings('.wrong_tips').text('').hide();
+      return true;
+    }
+  }
+  //验证手机号
+  $('.mobile').keyup(function(){
+    fnTel($('.mobile'));
+  });
+  $('.mobile').bind('input',function(){
+    fnTel($('.mobile'));
+  });
+  //文本域数字
+  $('.feed_word').keyup(function(){
+    $('.count_num span').text($(this).val().length);
+    $('.feed_word').parent().siblings('.wrong_tips').text('').show();
+  });
+  $('.feed_word').bind('input',function(){
+    $('.count_num span').text($(this).val().length);
+    $('.feed_word').parent().siblings('.wrong_tips').text('').show();
+  });
+  $('.feed_select li input').click(function(){
+    $('label').removeClass('active').children('input').prop('checked',false);
+    $(this).parents('label').toggleClass('active').children('input').prop('checked',true);;
+  });
+  $('.save_btn').click(function(){
+    var txtLength = $('.feed_word').val().length;
+    if(!txtLength){
+      $('.feed_word').parent().siblings('.wrong_tips').text('意见反馈内容不能为空！').show();
+      return false;
+    }
+    var selectLength = $('.feed_select li input:checked').length;
+    var bMobile = fnTel($('.mobile'));
+    var bCode = fnImgCode($('.img_code'));
+    if(bMobile&&bCode){
+      //反馈类型
+      var adviceType="";//反馈类型code
+      var adviceTypeName="";//反馈类型name
+      for(var i=0;i<selectLength;i++){
+        if(i!=(selectLength-1)){
+          adviceType += $('.feed_select li input:checked').eq(i).parent('label').attr('code') + '||';
+          adviceTypeName += $('.feed_select li input:checked').eq(i).parent('label').text() + '||';
+        }else{
+          adviceType += $('.feed_select li input:checked').eq(i).parent('label').attr('code');
+          adviceTypeName += $('.feed_select li input:checked').eq(i).parent('label').text();
+        }
+      }
+      var advise = $('.feed_word').val();
+      var mobile = $('.mobile').val();
+      var imgCode = $('.img_code').val();
+      $.ajax({
+        url:sUrl+'center/advise',
+        data:{
+          adviceType:adviceType,//反馈类型
+          adviceTypeName:adviceTypeName,//反馈类型
+          advise:advise,//意见
+          mobile:mobile,//手机号
+          imageCode:imgCode//图片验证码
+        },
+        success:function(data){
+          if(data.result){
+            fnLayerBox("您的反馈是我们前进的动力～");
+            $('.layer_btn').click(function(){window.location.href=sUrl+"center/toIndex";})
+          }else{
+            fnLayerBox(data.info);
+            $('.img_pic').find('img').attr("src",sUrl+"/captcha/drawing?time="+(new Date()).getTime());
+          }
+        }
+      })
+    }
+  })
+}
+</script>
+</html>

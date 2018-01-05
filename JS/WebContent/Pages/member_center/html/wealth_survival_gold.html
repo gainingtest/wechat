@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <meta name="format-detection" content="telephone=no,email=no">
+  <base href="../../"/>
+  <title>我的财富</title>
+  <link href="gv/common/css/reset.css" rel="stylesheet" type="text/css">
+  <link href="gv/common/css/main.css" rel="stylesheet" type="text/css">
+  <link href="gv/member_center/css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+	<div class="wrap wealth_all" id="gold" v-cloak>
+  	<p class="wealth_tab">
+        <span>可领取生存金总金额（元）</span>
+      <span class="money"></span>
+        <span class="wealth_gold_tips">*领取时结算利息</span>
+    </p>
+    <ul class="my_wealth">
+    	<li v-for="item in goldData">
+      	<a href="javascript:void(0)">
+          <p class="clearfix">
+          	<label>年金险</label>
+          </p>
+          <p class="clearfix turn_detail">
+          	<label>保单号</label>
+            <span class="policy_num">{{item.contNo}}</span>
+          </p>
+          <p class="clearfix long">
+            <label>险种名称</label>
+            <span>{{item.riskName}}</span>
+          </p>
+            <p class="clearfix">
+                <label>可领取生存金本金</label>
+                <span>{{item.drawableLiveMoney=='--'?item.drawableLiveMoney:item.drawableLiveMoney+'元'}}</span>
+            </p>
+          <p class="clearfix">
+            <label>已领取生存金总额</label>
+            <span>{{item.receivedLiveMoney}}元</span>
+          </p>
+        </a>
+      </li>
+    </ul>
+  </div>
+</body>
+<script type="text/javascript" src="gv/common/js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="gv/common/js/vue.min.js"></script>
+<script type="text/javascript" src="gv/common/js/main.js"></script>
+<script>
+    window.onload = function(){
+        var gold = new Vue({
+            el:'#gold',
+            data:{
+                goldData:{}
+            }     //保存生存金信息
+        });
+        fnUrlData();
+        $.ajax({
+            url:sUrl+'center/viewDetails',
+            data:{
+                incomeType:aValue[0],
+                contNos:decodeURIComponent(aValue[1])
+            },
+            success:function(data){
+                if(data.result){
+                    $('.money').text(data.object.allSurvivals);
+                    gold.$set('goldData',data.object.survivals);
+                    /*20161015新增保单详情链接*/
+                    Vue.nextTick(function(){
+                        $('.turn_detail').click(function(){
+                            var policyNo = $(this).find('.policy_num').text();//保单号
+                            location.href = sUrl+"policySearch/policySearchPage?policyNo="+policyNo;
+                        });
+                    });
+                }else{
+                    fnLayerBox(data.info);
+                    //调回财富总页
+                    $('.layer_btn').click(function(){
+                        location.href=sUrl+'center/toWealthAll';
+                    })
+                }
+            }
+        });
+    };
+</script>
+</html>
